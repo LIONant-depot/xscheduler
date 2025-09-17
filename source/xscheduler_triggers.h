@@ -11,7 +11,7 @@ namespace xscheduler
     class trigger : public job_base
     {
     public:
-                trigger             (void)                      noexcept : job_base(job_definition::make<priority::LOW>()) {}
+                trigger             (const universal_string& GroupName) noexcept : job_base(GroupName, job_definition::make<priority::LOW>()) {}
         void    JobWillNotifyMe     (job_base& Job)             noexcept;
 
     protected:

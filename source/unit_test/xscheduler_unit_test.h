@@ -4,12 +4,14 @@
 #include <thread>
 #include <iostream>
 
+#include "source/xscheduler.h"
+
 namespace xscheduler::unit_test
 {
     struct j0 : job<0>
     {
         std::atomic<int>& m_A;
-        j0(std::atomic<int>& A) : job<0>(), m_A(A){}
+        j0(std::atomic<int>& A) : job<0>(xscheduler::str_v<"j0">), m_A(A){}
         void OnRun() noexcept override
         {
             int a = ++m_A;
@@ -20,7 +22,7 @@ namespace xscheduler::unit_test
     struct j1 : job<1>
     {
         std::atomic<int>& m_A;
-        j1(std::atomic<int>& A) : job<1>(), m_A(A){}
+        j1(std::atomic<int>& A) : job<1>(xscheduler::str_v<"j1">), m_A(A){}
         void OnRun() noexcept override
         {
             int a = ++m_A;
@@ -30,7 +32,7 @@ namespace xscheduler::unit_test
 
     struct aj0 : async_job<0>
     { std::atomic<int>& m_A;
-        aj0(std::atomic<int>& A) : async_job<0>(), m_A(A) {}
+        aj0(std::atomic<int>& A) : async_job<0>(xscheduler::str_v<"aj0">), m_A(A) {}
         xscheduler::async_handle OnAsyncRun() noexcept override
         {
             int a = ++m_A;
@@ -44,7 +46,7 @@ namespace xscheduler::unit_test
     {
         std::atomic<int>& m_A;
 
-        aj1(std::atomic<int>& A) : async_job<1>(), m_A(A) {} xscheduler::async_handle OnAsyncRun() noexcept override
+        aj1(std::atomic<int>& A) : async_job<1>(xscheduler::str_v<"aj1">), m_A(A) {} xscheduler::async_handle OnAsyncRun() noexcept override
         {
             int a = ++m_A;
             co_yield *this;
@@ -58,7 +60,7 @@ namespace xscheduler::unit_test
     {
         std::atomic<int> BasicJobCount = 0;
 
-        System.SubmitLambda([&]()
+        System.SubmitLambda(xscheduler::str_v<"LambdaJob">, [&]()
         {
             printf("TestBasicJob!\n");
             BasicJobCount.fetch_add(1, std::memory_order_release);
@@ -78,7 +80,7 @@ namespace xscheduler::unit_test
     {
         std::atomic<int> BasicJobCount = 0;
 
-        System.SubmitLambda([&](xscheduler::job_base& This) -> xscheduler::async_handle
+        System.SubmitLambda(xscheduler::str_v<"LambdaJob">, [&](xscheduler::job_base& This) -> xscheduler::async_handle
         {
             printf("TestAsyncJob + 1!\n");
             BasicJobCount.fetch_add(1, std::memory_order_relaxed);
@@ -107,7 +109,7 @@ namespace xscheduler::unit_test
     {
         std::atomic<int> DepJobCount = 0;
 
-        trigger<2> Trigger;
+        trigger<2> Trigger(xscheduler::str_v<"TestDependencyGraph::Trigger">);
         j0 Dep1(DepJobCount), Dep2(DepJobCount);
         j1 RootJob(DepJobCount);
 
@@ -131,7 +133,7 @@ namespace xscheduler::unit_test
     {
         std::atomic<int> DepJobCount = 0;
 
-        trigger<2> Trigger;
+        trigger<2> Trigger(xscheduler::str_v<"TestDependencyGraphASync::Trigger">);
         aj0 Dep1(DepJobCount), Dep2(DepJobCount);
         aj1 RootJob(DepJobCount);
 
@@ -155,7 +157,7 @@ namespace xscheduler::unit_test
     {
         std::atomic<int> DepJobCount = 0;
 
-        trigger<1> Trigger;
+        trigger<1> Trigger(xscheduler::str_v<"TestAsyncWithDependencies::Trigger">);
         j1 Dep1(DepJobCount);
         j1 Dep2(DepJobCount);
         Dep1.setupDefinition(job_definition::make<complexity::LIGHT, priority::NORMAL, affinity::ANY>());
@@ -163,9 +165,9 @@ namespace xscheduler::unit_test
         Trigger.JobWillNotifyMe(Dep1);
         Trigger.JobWillNotifyMe(Dep2);
 
-        System.SubmitLambda([&]{ printf("Lambda Add\n"); DepJobCount.fetch_add(1, std::memory_order_relaxed); });
+        System.SubmitLambda(xscheduler::str_v<"LambdaJob">, [&]{ printf("Lambda Add\n"); DepJobCount.fetch_add(1, std::memory_order_relaxed); });
 
-        System.SubmitLambda([&](job_base& This) -> async_handle
+        System.SubmitLambda(xscheduler::str_v<"LambdaJobAsync">, [&](job_base& This) -> async_handle
         {
             co_await Trigger; // Wait for Dep1
             printf("ASynJob Add\n");
@@ -192,7 +194,7 @@ namespace xscheduler::unit_test
     void TestBasicChannel(system& System)
     {
         // Submit a job to ensure system is active
-        task_group Channel{ System };
+        task_group Channel{ xscheduler::str_v<"TestBasicChannel">, System};
 
         std::atomic<int> BasicJobCount = 0;
         for (int i=0; i<1000; ++i)
@@ -216,7 +218,7 @@ namespace xscheduler::unit_test
 
     void TestForeachLog(system& System)
     {
-        task_group Channel{ System };
+        task_group Channel{ xscheduler::str_v<"TestForeachLog">, System};
         std::vector<int> Vec(1000);
         std::atomic<int> Sum = 0;
         Channel.ForeachLog(Vec, 4, 10, [&Sum](std::span<int> View)
@@ -232,7 +234,7 @@ namespace xscheduler::unit_test
 
     void TestForeachFlat(system& System)
     {
-        task_group Channel{ System };
+        task_group Channel{ xscheduler::str_v<"TestForeachFlat">, System };
         std::vector<int> Vec(1000);
         std::atomic<int> Sum = 0;
         Channel.ForeachFlat(Vec, 100, [&Sum](std::span<int> View)

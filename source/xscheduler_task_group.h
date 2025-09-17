@@ -10,8 +10,7 @@ namespace xscheduler
     class task_group final : public job_base
     {
     public:
-
-        inline          task_group          (system& System, int MaxJobs = -1, job_definition Def = {}) noexcept;
+        inline          task_group          (const universal_string& GroupName, system& System, int MaxJobs = -1, job_definition Def = {}) noexcept;
 
         template<typename T_LAMBDA> requires std::invocable<T_LAMBDA>
         inline void     Submit              (T_LAMBDA&& Func)               noexcept;
@@ -37,9 +36,9 @@ namespace xscheduler
 
     private:
 
-        system&             m_System;
-        std::atomic<int>    m_nJobsInQueue{ 0 };
-        int                 m_MaxJobs;
+        system&                     m_System;
+        std::atomic<int>            m_nJobsInQueue{ 0 };
+        int                         m_MaxJobs;
     };
 }
 

@@ -24,10 +24,10 @@ namespace xscheduler
         inline void             WorkerStartWorking  (T_LAMBDA&& Lambda)                                     noexcept;
 
         template<typename T_FUNCTION> requires (std::invocable<T_FUNCTION> || std::invocable<T_FUNCTION, job_base&>)
-        inline void             SubmitLambda        (T_FUNCTION&& Func, complexity Complexity = complexity::LIGHT, priority Priority = priority::NORMAL, affinity Affinity = affinity::ANY) noexcept xquatum;
+        inline void             SubmitLambda        (const universal_string& Name, T_FUNCTION&& Func, complexity Complexity = complexity::LIGHT, priority Priority = priority::NORMAL, affinity Affinity = affinity::ANY) noexcept xquatum;
 
         template<typename T_FUNCTION> requires (std::invocable<T_FUNCTION> || std::invocable<T_FUNCTION, job_base&>)
-        job_base&               AllocLambda         (T_FUNCTION&& Func, job_definition Definition)          noexcept xquatum;
+        job_base&               AllocLambda         (const universal_string& Name, T_FUNCTION&& Func, job_definition Definition) noexcept xquatum;
 
         template<std::integral T = int>
         inline [[nodiscard]] T  getWorkerCount      (void) const                                            noexcept xquatum;

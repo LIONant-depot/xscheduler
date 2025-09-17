@@ -4,10 +4,10 @@ namespace xscheduler
 {
     //------------------------------------------------------------------------------
 
-    task_group::task_group(system& System, int MaxJobs, job_definition Def) noexcept
-        : job_base([](job_definition& D) { D.m_Complexity = complexity::LIGHT; D.m_WhenDone = when_done::DELETE; return D; }(Def))
-        , m_System{ System }
-        , m_MaxJobs{ MaxJobs < 0 ? System.getWorkerCount<int>() : MaxJobs }
+    task_group::task_group(const universal_string& GroupName, system& System, int MaxJobs, job_definition Def) noexcept
+        : job_base(GroupName, [](job_definition& D) { D.m_Complexity = complexity::LIGHT; D.m_WhenDone = when_done::DELETE; return D; }(Def))
+        , m_System      { System }
+        , m_MaxJobs     { MaxJobs < 0 ? System.getWorkerCount<int>() : MaxJobs }
     {
         assert(m_MaxJobs >= 1);
     }
@@ -17,7 +17,7 @@ namespace xscheduler
     template<typename T_LAMBDA> requires std::invocable<T_LAMBDA>
     void task_group::Submit(T_LAMBDA&& Func) noexcept
     {
-        job_base& Job = m_System.AllocLambda(std::forward<T_LAMBDA>(Func), m_Definition);
+        job_base& Job = m_System.AllocLambda(*this->m_pName, std::forward<T_LAMBDA>(Func), m_Definition);
 
         // Make the lambda notify us when it is done...
         Job.AppendJobToBeTrigger(*this);
@@ -32,9 +32,9 @@ namespace xscheduler
         if ((m_nJobsInQueue.load() >= (m_MaxJobs - 1)))
         {
             m_System.WorkerStartWorking([&]
-                {
-                    return m_nJobsInQueue.load() >= (m_MaxJobs - 1);
-                });
+            {
+                return m_nJobsInQueue.load() >= (m_MaxJobs - 1);
+            });
         }
     }
 
@@ -46,9 +46,9 @@ namespace xscheduler
         if (m_nJobsInQueue.load(std::memory_order_relaxed))
         {
             m_System.WorkerStartWorking([&]
-                {
-                    return m_nJobsInQueue.load(std::memory_order_relaxed);
-                });
+            {
+                return m_nJobsInQueue.load(std::memory_order_relaxed);
+            });
         }
     }
 
@@ -76,9 +76,9 @@ namespace xscheduler
         if (R > Cutoff) do
         {
             Submit([&Container, Start, R, &func]() noexcept
-                {
-                    func(std::span<typename T_CONTAINER::value_type>(Container.data() + Start, R));
-                });
+            {
+                func(std::span<typename T_CONTAINER::value_type>(Container.data() + Start, R));
+            });
 
             Start += R;
             Total -= R;
@@ -91,9 +91,9 @@ namespace xscheduler
         {
             R = std::min(Cutoff, Total);
             Submit([&Container, Start, R, &func]() noexcept
-                {
-                    func(std::span<typename T_CONTAINER::value_type>(Container.data() + Start, R));
-                });
+            {
+                func(std::span<typename T_CONTAINER::value_type>(Container.data() + Start, R));
+            });
             Start += R;
             Total -= R;
 
@@ -133,9 +133,9 @@ namespace xscheduler
         {
             const auto Count = std::min(Total - Start, Divider);
             Submit([View = std::span<typename T_CONTAINER::value_type>(Container.data() + Start, Count), &func]()
-                {
-                    func(View);
-                });
+            {
+                func(View);
+            });
 
             Start += Count;
         } while (Start < Total);
@@ -146,12 +146,12 @@ namespace xscheduler
     void task_group::ForeachFlat(T_CONTAINER& Container, const std::size_t Diviser, T_LAMBDA&& func) noexcept
     {
         ForeachFlat(Container, Diviser, [&func](std::span<typename T_CONTAINER::value_type>& View)
+        {
+            for (auto& E : View)
             {
-                for (auto& E : View)
-                {
-                    func(E);
-                }
-            });
+                func(E);
+            }
+        });
     }
 
     //------------------------------------------------------------------------------

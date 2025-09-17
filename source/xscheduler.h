@@ -48,6 +48,34 @@
 namespace xscheduler
 {
     class system;
+
+    struct universal_string
+    {
+        const char*     m_pStr; // = T_STR_V.value1.data();
+        const wchar_t*  m_pWStr;// = T_STR_V.value2.data();
+    };
+
+    namespace details
+    {
+        template<std::size_t N>
+        struct str_literal
+        {
+            std::array<char,    N> value1{};
+            std::array<wchar_t, N> value2{};
+
+            consteval str_literal(const char(&str)[N])
+            {
+                for (std::size_t i = 0; i < N; ++i)
+                    value1[i] = str[i];
+
+                for (std::size_t i = 0; i <N; ++i)
+                    value2[i] = static_cast<wchar_t>(str[i]);
+            }
+        };
+    }
+
+    template< details::str_literal T_NAME_V>
+    static constexpr universal_string str_v = universal_string{ T_NAME_V.value1.data(), T_NAME_V.value2.data() };
 }
 
 //

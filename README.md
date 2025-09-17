@@ -27,12 +27,13 @@ int main() {
     xscheduler::system Scheduler{4}; // 4 workers
 
     std::atomic<int> Count = 0;
-    xscheduler::trigger<2> Trigger;
+    xscheduler::trigger<2> Trigger(xscheduler::str_v<"Test Trigger">);
 
     // Define jobs
     struct MyJob : xscheduler::job<0> {
         std::atomic<int>& m_Count;
-        MyJob(std::atomic<int>& Count) : m_Count(Count) {}
+        MyJob(std::atomic<int>& Count) : 
+        xscheduler::job<0>(xscheduler::str_v<"MyJob">), m_Count(Count) {}
         void OnRun() noexcept override { ++m_Count; printf("Job done: %d\n", m_Count.load()); }
     };
 
@@ -44,7 +45,7 @@ int main() {
     Scheduler.SubmitJob(Job2);
 
     // Async job awaiting trigger
-    Scheduler.SubmitLambda([&](xscheduler::job_base& This) -> xscheduler::async_handle {
+    Scheduler.SubmitLambda(xscheduler::str_v<"AsyncTest">, [&](xscheduler::job_base& This) -> xscheduler::async_handle {
         co_await Trigger; // Wait for dependencies
         printf("Async job complete!\n");
         ++Count;

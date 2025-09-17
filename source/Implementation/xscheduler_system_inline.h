@@ -93,10 +93,10 @@ namespace xscheduler
     //-------------------------------------------------------------------------
 
     template<typename T_FUNCTION> requires (std::invocable<T_FUNCTION> || std::invocable<T_FUNCTION, job_base&>)
-    void system::SubmitLambda(T_FUNCTION&& Func, complexity Complexity, priority Priority, affinity Affinity) noexcept xquatum
+    void system::SubmitLambda(const universal_string& Name, T_FUNCTION&& Func, complexity Complexity, priority Priority, affinity Affinity) noexcept xquatum
     {
         auto& Kit = m_WorkerKits[thread_id_v];
-        auto& Job = *Kit.m_JobPool.pop(std::forward<T_FUNCTION>(Func), &Kit.m_JobPool);
+        auto& Job = *Kit.m_JobPool.pop(Name, std::forward<T_FUNCTION>(Func), &Kit.m_JobPool);
         Job.m_Definition.m_Complexity = Complexity;
         Job.m_Definition.m_Priority = Priority;
         Job.m_Definition.m_Affinity = Affinity;
@@ -109,10 +109,10 @@ namespace xscheduler
     //-------------------------------------------------------------------------
 
     template<typename T_FUNCTION> requires (std::invocable<T_FUNCTION> || std::invocable<T_FUNCTION, job_base&>)
-    job_base& system::AllocLambda(T_FUNCTION&& Func, job_definition Definition) noexcept xquatum
+    job_base& system::AllocLambda(const universal_string& Name, T_FUNCTION&& Func, job_definition Definition) noexcept xquatum
     {
         auto& Kit = m_WorkerKits[thread_id_v];
-        auto& Job = *Kit.m_JobPool.pop(std::forward<T_FUNCTION>(Func), &Kit.m_JobPool);
+        auto& Job = *Kit.m_JobPool.pop(Name, std::forward<T_FUNCTION>(Func), &Kit.m_JobPool);
 
         Job.m_Definition = Definition;
 

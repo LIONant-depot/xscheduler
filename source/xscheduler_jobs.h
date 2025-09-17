@@ -111,7 +111,7 @@ namespace xscheduler
     class job_base
     {
     public:
-        constexpr                       job_base            (job_definition Def)        noexcept : m_Definition{ Def } {}
+        constexpr                       job_base            (const universal_string& Name, job_definition Def) noexcept : m_Definition{Def}, m_pName{&Name}{}
         constexpr                       job_base            (void)                      noexcept = default;
         virtual                        ~job_base            (void)                      noexcept = default;
         job_base&                       setupDefinition     (job_definition Def)        noexcept { m_Definition = Def; return *this; }
@@ -135,6 +135,7 @@ namespace xscheduler
         std::atomic<bool>       m_isDone            { false };
         system*                 m_pSystem           { nullptr };
         job_definition          m_Definition        {};
+        const universal_string* m_pName             { nullptr };
 
         friend class system;
         friend struct details::final_awaiter;
@@ -147,8 +148,7 @@ namespace xscheduler
     class job : public job_base
     {
     public:
-        constexpr               job             (void)                      noexcept = default;
-        constexpr               job             (job_definition Def)        noexcept : job_base{ Def } {}
+        constexpr               job             (const universal_string& Name, job_definition Def={}) noexcept : job_base{ Name, Def } {}
 
     protected:
         void                    OnDone          (void)                      noexcept { OnNotifyTrigger(*m_pSystem); job_base::OnDone(); }
@@ -167,8 +167,7 @@ namespace xscheduler
     class job<0> : public job_base
     {
     public:
-        constexpr               job             (void)                      noexcept = default;
-        constexpr               job             (job_definition Def)        noexcept : job_base{ [&] {Def.m_IsAsync = false; return Def; }() } {}
+        constexpr               job             (const universal_string& Name, job_definition Def={}) noexcept : job_base{ Name, Def } {}
 
     protected:
         void                    OnAddDependent  (job_base& Dependent)       noexcept override { assert(false && "Cannot add dependent to job<0>"); }
@@ -181,8 +180,7 @@ namespace xscheduler
     class async_job : public job<T_DEPENDENCY_COUNT_V>
     {
     public:
-        constexpr               async_job       (void)                      noexcept : job<T_DEPENDENCY_COUNT_V>{ [&]{job_definition Def{}; Def.m_IsAsync = true; return Def; }() } {}
-        constexpr               async_job       (job_definition Def)        noexcept : job<T_DEPENDENCY_COUNT_V>{ [&]{Def.m_IsAsync = true; return Def; }() } {}
+        constexpr               async_job       (const universal_string& Name, job_definition Def={}) noexcept : job<T_DEPENDENCY_COUNT_V>{ Name, [&]{Def.m_IsAsync = true; return Def; }() } {}
 
     protected:
         virtual async_handle    OnAsyncRun      (void)                      noexcept = 0;
@@ -197,8 +195,7 @@ namespace xscheduler
     class async_job<0> : public job_base
     {
     public:
-        constexpr               async_job       (void)                      noexcept : job_base{ [&] {job_definition Def{}; Def.m_IsAsync = true; return Def; }() } {}
-        constexpr               async_job       (job_definition Def)        noexcept : job_base{ [&] {Def.m_IsAsync = true; return Def; }() } {}
+        constexpr               async_job       (const universal_string& Name, job_definition Def={}) noexcept : job_base{ Name, [&] {Def.m_IsAsync = true; return Def; }() } {}
 
     protected:
         virtual void            OnDone          (void)                      noexcept xquatum { OnTriggered(); m_isDone.store(true, std::memory_order_release); }
@@ -290,7 +287,7 @@ namespace xscheduler
             }
 
             template<typename T_LAMBDA>
-            constexpr           lambda_job      (T_LAMBDA&& Func, void* pPool)  noexcept : m_Func(make_data(std::forward<T_LAMBDA>(Func))), m_pJobPool(pPool){}
+            constexpr           lambda_job      (const universal_string& Name, T_LAMBDA&& Func, void* pPool)  noexcept : job<1>(Name), m_Func(make_data(std::forward<T_LAMBDA>(Func))), m_pJobPool(pPool){}
             void                OnRun           (void)                          noexcept override xquatum;
             inline void         OnDelete        (void)                          noexcept override xquatum;
         };
