@@ -12,7 +12,11 @@ namespace xscheduler
     {
     public:
 
-        inline                  system              (int NWorkers = -1)                                     noexcept;
+        inline                  system              (void)                                                  noexcept = default;
+
+        inline                  system              (int NWorkers)                                          noexcept;
+
+        inline void             Init                (int NWorkers = -1)                                     noexcept;
 
         inline                 ~system              (void)                                                  noexcept;
 
@@ -53,7 +57,6 @@ namespace xscheduler
             std::uint16_t               m_iNextKit      {};
         };
 
-        inline void                 Init                (int NWorkers = -1)                                 noexcept;
         inline void                 setWorkerName       (const wchar_t* pName)                              noexcept;
         inline job_base*            getLightJob         (worker_kit& Kit)                                   noexcept xquatum;
         inline job_base*            getJob              (worker_kit& Kit)                                   noexcept xquatum;
@@ -71,6 +74,11 @@ namespace xscheduler
         std::atomic<int>                        m_ReadyWorkers{ 0 };
         std::atomic<bool>                       m_MainThreadShouldWork{ false };
     };
+
+    //
+    // Add a global instance (But let the user initialize it)
+    //
+    inline system g_System;
 }
 
 #endif

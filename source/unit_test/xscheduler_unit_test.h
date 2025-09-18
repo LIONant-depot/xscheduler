@@ -251,7 +251,7 @@ namespace xscheduler::unit_test
     // Main test function
     void RunTests()
     {
-        system System{}; // 2 workers for testing
+        system System{4}; // 4 workers for testing
         if constexpr (true) TestBasicJob(System);
         if constexpr (true) TestAsyncJob(System);
         if constexpr (true) TestDependencyGraph(System);
