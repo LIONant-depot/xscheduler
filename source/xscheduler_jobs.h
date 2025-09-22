@@ -185,7 +185,7 @@ namespace xscheduler
     protected:
         virtual async_handle    OnAsyncRun      (void)                      noexcept = 0;
         void                    OnRun           (void)                      noexcept final;
-        void                    OnNotifyTrigger (xscheduler::system& Sys)   noexcept override xquatum;
+        inline void             OnNotifyTrigger (xscheduler::system& Sys)   noexcept override xquatum;
     };
 
     //
@@ -201,8 +201,8 @@ namespace xscheduler
         virtual void            OnDone          (void)                      noexcept xquatum { OnTriggered(); m_isDone.store(true, std::memory_order_release); }
         virtual async_handle    OnAsyncRun      (void)                      noexcept = 0;
         inline void             OnRun           (void)                      noexcept final;
-        void                    OnNotifyTrigger (xscheduler::system& Sys)   noexcept override xquatum;
-        void                    OnTriggered     (void)                      noexcept override xquatum;
+        inline void             OnNotifyTrigger (xscheduler::system& Sys)   noexcept override xquatum;
+        inline void             OnTriggered     (void)                      noexcept override xquatum;
         void                    OnAddDependent  (job_base& Dependent)       noexcept override { assert(false && "Cannot add dependent to async_job<0>"); }
     };
 
@@ -288,7 +288,7 @@ namespace xscheduler
 
             template<typename T_LAMBDA>
             constexpr           lambda_job      (const universal_string& Name, T_LAMBDA&& Func, void* pPool)  noexcept : job<1>(Name), m_Func(make_data(std::forward<T_LAMBDA>(Func))), m_pJobPool(pPool){}
-            void                OnRun           (void)                          noexcept override xquatum;
+            inline void         OnRun           (void)                          noexcept override xquatum;
             inline void         OnDelete        (void)                          noexcept override xquatum;
         };
 
