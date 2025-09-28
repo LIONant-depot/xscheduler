@@ -13,6 +13,12 @@ namespace xscheduler
     }
 
     //------------------------------------------------------------------------------
+    task_group::~task_group()
+    {
+        // make sure we can join...
+        join();
+    }
+    //------------------------------------------------------------------------------
 
     template<typename T_LAMBDA> requires std::invocable<T_LAMBDA>
     void task_group::Submit(T_LAMBDA&& Func) noexcept
@@ -29,11 +35,11 @@ namespace xscheduler
         m_System.SubmitJob(Job);
 
         // If we are adding too much work then we should just wait a little
-        if ((m_nJobsInQueue.load() >= (m_MaxJobs - 1)))
+        if ((m_nJobsInQueue.load() >= m_MaxJobs))
         {
             m_System.WorkerStartWorking([&]
             {
-                return m_nJobsInQueue.load() >= (m_MaxJobs - 1);
+                return m_nJobsInQueue.load() >= m_MaxJobs;
             });
         }
     }
@@ -42,6 +48,9 @@ namespace xscheduler
 
     void task_group::join(void) noexcept
     {
+        // User officially called join... so we can remove the initial 1
+        m_nJobsInQueue.fetch_sub(1, std::memory_order_release);
+
         // If we are adding too much work then we should just wait a little
         if (m_nJobsInQueue.load(std::memory_order_relaxed))
         {

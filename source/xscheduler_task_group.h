@@ -11,6 +11,7 @@ namespace xscheduler
     {
     public:
         inline          task_group          (const universal_string& GroupName, system& System = xscheduler::g_System, int MaxJobs = -1, job_definition Def = {}) noexcept;
+        inline         ~task_group          (void)                          noexcept override;
 
         template<typename T_LAMBDA> requires std::invocable<T_LAMBDA>
         inline void     Submit              (T_LAMBDA&& Func)               noexcept;
@@ -37,7 +38,7 @@ namespace xscheduler
     private:
 
         system&                     m_System;
-        std::atomic<int>            m_nJobsInQueue{ 0 };
+        std::atomic<int>            m_nJobsInQueue{ 1 };        // Initializes with always 1 job in the queue to make sure it does not preemptively exist
         int                         m_MaxJobs;
     };
 }
