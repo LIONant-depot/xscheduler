@@ -49,7 +49,7 @@ namespace xscheduler
     void task_group::join(void) noexcept
     {
         // User officially called join... so we can remove the initial 1
-        m_nJobsInQueue.fetch_sub(1, std::memory_order_release);
+        if (m_nJobsInQueue.load(std::memory_order_relaxed)) m_nJobsInQueue.fetch_sub(1, std::memory_order_release);
 
         // If we are adding too much work then we should just wait a little
         if (m_nJobsInQueue.load(std::memory_order_relaxed))
