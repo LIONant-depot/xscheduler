@@ -30,6 +30,8 @@ namespace xscheduler
         template< typename T_CONTAINER, typename T_LAMBDA > requires xcontainer::function::is_lambda_signature_same_v< T_LAMBDA, void(typename T_CONTAINER::value_type&) >
         inline void     ForeachFlat         (T_CONTAINER& Container, const std::size_t Diviser, T_LAMBDA&& func) noexcept;
 
+        inline int      getJobsInQueue      (void) const noexcept { return m_nJobsInQueue ? m_nJobsInQueue -1 : 0; }
+
     protected:
 
         inline void     OnRun               (void)                          noexcept override;

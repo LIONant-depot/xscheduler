@@ -323,6 +323,10 @@ namespace xscheduler
             {
                 Job.OnDelete();
             }
+            else
+            {
+                Job.OnReset();
+            }
         }
     }
 

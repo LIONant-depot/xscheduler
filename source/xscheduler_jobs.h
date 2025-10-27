@@ -124,11 +124,13 @@ namespace xscheduler
         virtual void                    OnNotifyTrigger     (xscheduler::system& Sys)   noexcept xquatum { OnTriggered(); }
 
     protected:
+
         virtual void                    OnAddDependent      (job_base& Dependent)       noexcept { assert(false && "Cannot add dependent to base job"); }
         virtual void                    OnTriggered         (void)                      noexcept xquatum { /* Default: do nothing */ }
         virtual void                    OnRun               (void)                      noexcept xquatum = 0;
         virtual void                    OnDone              (void)                      noexcept xquatum { m_isDone.store(true, std::memory_order_release); }
         virtual void                    OnDelete            (void)                      noexcept xquatum { delete this; }
+        virtual void                    OnReset             (void)                      noexcept xquatum { m_isDone.store( false, std::memory_order_relaxed); m_pSystem = nullptr; m_AsyncHandle = async_handle{}; }
 
     protected:
         async_handle            m_AsyncHandle       {};
