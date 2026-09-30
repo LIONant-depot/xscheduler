@@ -96,10 +96,16 @@ namespace xscheduler
     void system::SubmitLambda(const universal_string& Name, T_FUNCTION&& Func, complexity Complexity, priority Priority, affinity Affinity) noexcept xquatum
     {
         auto& Kit = m_WorkerKits[thread_id_v];
-        auto& Job = *Kit.m_JobPool.pop(Name, std::forward<T_FUNCTION>(Func), &Kit.m_JobPool);
+        auto* pJob = Kit.m_JobPool.pop(Name, std::forward<T_FUNCTION>(Func), &Kit.m_JobPool);
+        assert(pJob && "lambda job pool exhausted - SubmitLambda jobs must use when_done::DELETE so they return to the pool");
+        auto& Job = *pJob;
+        // Pooled lambda_job nodes are recycled via OnDelete -> pool::push. Default job_definition
+        // leaves when_done as DO_NOTHING, which would OnReset instead and permanently drain the pool
+        // (crash once ~1024 SubmitLambda calls have run - e.g. idle SC / scene scans).
+        Job.m_Definition.m_WhenDone   = when_done::DELETE;
         Job.m_Definition.m_Complexity = Complexity;
-        Job.m_Definition.m_Priority = Priority;
-        Job.m_Definition.m_Affinity = Affinity;
+        Job.m_Definition.m_Priority   = Priority;
+        Job.m_Definition.m_Affinity   = Affinity;
 
         if constexpr (std::invocable<T_FUNCTION, job_base&>) Job.m_Definition.m_IsAsync = true;
         else                                                 Job.m_Definition.m_IsAsync = false;
@@ -112,9 +118,13 @@ namespace xscheduler
     job_base& system::AllocLambda(const universal_string& Name, T_FUNCTION&& Func, job_definition Definition) noexcept xquatum
     {
         auto& Kit = m_WorkerKits[thread_id_v];
-        auto& Job = *Kit.m_JobPool.pop(Name, std::forward<T_FUNCTION>(Func), &Kit.m_JobPool);
+        auto* pJob = Kit.m_JobPool.pop(Name, std::forward<T_FUNCTION>(Func), &Kit.m_JobPool);
+        assert(pJob && "lambda job pool exhausted");
+        auto& Job = *pJob;
 
         Job.m_Definition = Definition;
+        // Same as SubmitLambda: pooled nodes only return via OnDelete.
+        Job.m_Definition.m_WhenDone = when_done::DELETE;
 
         if constexpr (std::invocable<T_FUNCTION, job_base&>) Job.m_Definition.m_IsAsync = true;
         else                                                 Job.m_Definition.m_IsAsync = false;
