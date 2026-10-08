@@ -212,7 +212,10 @@ namespace xscheduler
 #ifdef _WIN32
         SetThreadDescription(GetCurrentThread(), pName);
 #elif __linux__
-        pthread_setname_np(pthread_self(), pName);
+        // Linux names are narrow and limited to 15 chars + NUL
+        char Name[16]{};
+        for (int i = 0; i < 15 && pName[i]; ++i) Name[i] = (pName[i] < 128) ? static_cast<char>(pName[i]) : '?';
+        pthread_setname_np(pthread_self(), Name);
 #elif __APPLE__
         pthread_setname_np(pName);
 #endif
