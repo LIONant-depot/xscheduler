@@ -153,7 +153,7 @@ namespace xscheduler
         constexpr               job             (const universal_string& Name, job_definition Def={}) noexcept : job_base{ Name, Def } {}
 
     protected:
-        void                    OnDone          (void)                      noexcept { OnNotifyTrigger(*m_pSystem); job_base::OnDone(); }
+        void                    OnDone          (void)                      noexcept override { OnNotifyTrigger(*m_pSystem); job_base::OnDone(); }
         void                    OnAddDependent  (job_base& Dependent)       noexcept override xquatum { assert(m_DependentCount < T_DEPENDENCY_COUNT_V && "Dependent count exceeds limit"); m_DependentJobs[m_DependentCount++] = &Dependent; }
         void                    OnTriggered     (void)                      noexcept override xquatum { for (auto* pDependent : std::span{ m_DependentJobs.data(), m_DependentCount }) pDependent->OnNotifyTrigger(*m_pSystem); }
 
@@ -200,7 +200,7 @@ namespace xscheduler
         constexpr               async_job       (const universal_string& Name, job_definition Def={}) noexcept : job_base{ Name, [&] {Def.m_IsAsync = true; return Def; }() } {}
 
     protected:
-        virtual void            OnDone          (void)                      noexcept xquatum { OnTriggered(); m_isDone.store(true, std::memory_order_release); }
+        virtual void            OnDone          (void)                      noexcept override xquatum { OnTriggered(); m_isDone.store(true, std::memory_order_release); }
         virtual async_handle    OnAsyncRun      (void)                      noexcept = 0;
         inline void             OnRun           (void)                      noexcept final;
         inline void             OnNotifyTrigger (xscheduler::system& Sys)   noexcept override xquatum;

@@ -13,7 +13,7 @@ namespace xscheduler
     }
 
     //------------------------------------------------------------------------------
-    task_group::~task_group()
+    task_group::~task_group() noexcept
     {
         // make sure we can join...
         join();
