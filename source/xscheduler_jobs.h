@@ -115,7 +115,7 @@ namespace xscheduler
         constexpr                       job_base            (void)                      noexcept = default;
         virtual                        ~job_base            (void)                      noexcept = default;
         job_base&                       setupDefinition     (job_definition Def)        noexcept { m_Definition = Def; return *this; }
-        constexpr [[nodiscard]] job_definition getDefinition(void)              const   noexcept xquatum { return m_Definition; }
+        [[nodiscard]] constexpr job_definition getDefinition(void)              const   noexcept xquatum { return m_Definition; }
         [[nodiscard]] auto&             getAsyncHandle      (void)                      noexcept xquatum { return m_AsyncHandle; }
         void                            AppendJobToBeTrigger(job_base& Dependent)       noexcept xquatum { OnAddDependent(Dependent); }
         [[nodiscard]] bool              isDone              (void)              const   noexcept xquatum { return m_isDone.load(std::memory_order_acquire); }

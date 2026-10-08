@@ -34,7 +34,7 @@ namespace xscheduler
         job_base&               AllocLambda         (const universal_string& Name, T_FUNCTION&& Func, job_definition Definition) noexcept xquatum;
 
         template<std::integral T = int>
-        inline [[nodiscard]] T  getWorkerCount      (void) const                                            noexcept xquatum;
+        [[nodiscard]] inline T  getWorkerCount      (void) const                                            noexcept xquatum;
 
     protected:
 
