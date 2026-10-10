@@ -179,8 +179,9 @@ namespace xscheduler
                     }
                     else
                     {
-                        // Wait for everyone to get ready
-                        while (m_State.load() != state::WORKING)
+                        // Wait for everyone to get ready. Not "until WORKING": when the process exits while we are still starting (a compiler that fails
+                        // at once), Shutdown() moves the state on to EXITING, and a worker waiting for WORKING would spin forever and hang the exit.
+                        while (m_State.load() == state::NOT_INITIALIZE)
                         {
                             std::this_thread::yield();
                         }
