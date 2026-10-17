@@ -13,7 +13,10 @@ namespace xscheduler
 
     system::~system() noexcept
     {
-        Shutdown();
+        // g_System is a global that its user starts (Init) when it wants it: a module that includes this header and never
+        // starts its own (LIONRender.dll and its copies start theirs on first GI use only) has nothing to shut down when it unloads.
+        // Shutdown() itself still asserts: an explicit Shutdown of a system that is not working is a bug.
+        if (m_State == state::WORKING) Shutdown();
     }
 
     //-------------------------------------------------------------------------
