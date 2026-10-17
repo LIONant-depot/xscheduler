@@ -31,6 +31,7 @@
     #include <windows.h>
     #include <processthreadsapi.h>
     #undef DELETE
+    #undef ERROR        // wingdi.h's (0): an enum value named ERROR in an includer (xresource_pipeline::msg_type::ERROR) would not compile
 #elif __linux__
     #include <pthread.h>
 #elif __APPLE__
