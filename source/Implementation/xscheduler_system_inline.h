@@ -39,12 +39,10 @@ namespace xscheduler
             if (m_Workers[i].joinable()) m_Workers[i].join();
         }
 
-        // Wait for everyone to exit
-        while (m_ReadyWorkers.load() != 0)
-        {
-            // Waiting...
-            std::this_thread::yield();
-        }
+        // Everyone joined: no worker is left. (Not "until the count is 0": a DLL's system - one that started its own - is shut down by its
+        // global's destructor in DLL_PROCESS_DETACH at exit, after the process has killed its workers without their check-out - a spin on
+        // the count hung the editor's close forever)
+        m_ReadyWorkers.store(0);
 
         // Officially destroy all the workers
         m_Workers.Delete();
